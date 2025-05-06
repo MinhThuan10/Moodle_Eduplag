@@ -315,31 +315,53 @@ class eduplag {
         
     }
 
+
+    public static function on_module_updated(\core\event\course_module_updated $event) {
+        global $DB;
+
+        $cmid = $event->contextinstanceid;
+
+        // Lấy bản ghi course_modules
+        $cm = $DB->get_record('course_modules', ['id' => $cmid], '*', IGNORE_MISSING);
+
+        if ($cm && $cm->module == self::get_assign_moduleid() && $cm->deletioninprogress) {
+            // Gọi hàm xử lý bạn muốn khi người dùng ấn "xóa"
+            debugging("Assignment {$cm->instance} is marked for deletion.");
+            self::assignment_deleted($cm);
+        }
+    }
+
+    private static function get_assign_moduleid() {
+        global $DB;
+        static $assignid = null;
+        if ($assignid === null) {
+            $assignid = $DB->get_field('modules', 'id', ['name' => 'assign']);
+        }
+        return $assignid;
+    }
+
     public static function assignment_deleted(\core\event\course_module_deleted $event) {
 
-        error_log('goi api xoa assignment');
+        global $SITE;
+        if ($event->other['modulename'] !== 'assign') {
+            return true;
+        }
+        $schoolkey = get_config('mod_assign', 'school_key');
+        $fullname = $SITE->fullname;
 
-        // global $SITE;
-        // if ($event->other['modulename'] !== 'assign') {
-        //     return true;
-        // }
-        // $schoolkey = get_config('mod_assign', 'school_key');
-        // $fullname = $SITE->fullname;
+        $payload = json_encode([
+            'school_name' => $fullname,
+            'assignment_id' => $event->other['instanceid'],
+            'school_key'  => $schoolkey
+        ]);
 
-        // $payload = json_encode([
-        //     'school_name' => $fullname,
-        //     'assignment_id' => $event->other['instanceid'],
-        //     'school_key'  => $schoolkey
-        // ]);
-
-        // $ch = curl_init('http://localhost:5000/mod/api/delete_assignment');
-        // curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        // curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
-        // curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-        // curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        // curl_exec($ch);
-        // curl_close($ch);
-
+        $ch = curl_init('http://localhost:5000/mod/api/delete_assignment');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_exec($ch);
+        curl_close($ch);
 
     }
 
@@ -390,6 +412,8 @@ class eduplag {
         switch ($shortname) {
             case 'student':
                 return 'Student';
+            case 'manager':
+                return 'Manager';
             case 'teacher':
             case 'editingteacher':
                 return 'Teacher';

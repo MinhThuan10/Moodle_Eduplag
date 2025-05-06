@@ -55,6 +55,8 @@ function assign_delete_instance($id) {
     $context = context_module::instance($cm->id);
 
     $assignment = new assign($context, null, null);
+
+
     return $assignment->delete_instance();
 }
 

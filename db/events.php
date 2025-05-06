@@ -100,12 +100,12 @@ $observers = array(
         'internal'    => false,
     ],
 
-    [
-        'eventname'   => '\core\event\course_module_deleted',
-        'callback'    => '\mod_assign\eduplag::assignment_deleted',
-        'priority'    => 9999,
-        'internal'    => false,
-    ],
+    // [
+    //     'eventname'   => '\core\event\course_module_deleted',
+    //     'callback'    => '\mod_assign\eduplag::assignment_deleted',
+    //     'priority'    => 9999,
+    //     'internal'    => false,
+    // ],
 
     // add user to course
     [
